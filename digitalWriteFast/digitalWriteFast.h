@@ -127,11 +127,11 @@
 
 
 #define __atomicWrite__(A,P,V) \
-if ( (int)(A) < 0x40) { bitWrite(*(A), __digitalPinToBit(P), (V) );}  \
+if ( (int)(A) < 0x40) { bitWrite(*((volatile uint8_t*) A), __digitalPinToBit(P), (V) );}  \
 else {                                                         \
 uint8_t register saveSreg = SREG;                          \
 cli();                                                     \
-bitWrite(*(A), __digitalPinToBit(P), (V) );                   \
+bitWrite(*((volatile uint8_t*)A), __digitalPinToBit(P), (V) );                   \
 SREG=saveSreg;                                             \
 } 
 
@@ -139,14 +139,14 @@ SREG=saveSreg;                                             \
 #ifndef digitalWriteFast
 #define digitalWriteFast(P, V) \
 do {                       \
-if (__builtin_constant_p(P) && __builtin_constant_p(V))   __atomicWrite__((uint8_t*) digitalPinToPortReg(P),P,V) \
+if (__builtin_constant_p(P) && __builtin_constant_p(V))   __atomicWrite__(digitalPinToPortReg(P),P,V) \
 else  digitalWrite((P), (V));         \
 }while (0)
 #endif  //#ifndef digitalWriteFast2
 
 #if !defined(pinModeFast)
 #define pinModeFast(P, V) \
-do {if (__builtin_constant_p(P) && __builtin_constant_p(V)) __atomicWrite__((uint8_t*) digitalPinToDDRReg(P),P,V) \
+do {if (__builtin_constant_p(P) && __builtin_constant_p(V)) __atomicWrite__(digitalPinToDDRReg(P),P,V) \
 else pinMode((P), (V)); \
 } while (0)
 #endif
@@ -154,7 +154,7 @@ else pinMode((P), (V)); \
 
 #ifndef noAnalogWrite
 #define noAnalogWrite(P) \
-	do {if (__builtin_constant_p(P) )  __atomicWrite((uint8_t*) __digitalPinToTimer(P),P,0) \
+	do {if (__builtin_constant_p(P) )  __atomicWrite(__digitalPinToTimer(P),P,0) \
 		else turnOffPWM((P));   \
 } while (0)
 #endif		
