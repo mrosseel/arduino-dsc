@@ -1,3 +1,7 @@
+#include <digitalWriteFast.h>
+
+#include <PinChangeInt.h>
+
 /*
   Arduino based Digital Setting Circle
  
@@ -27,10 +31,6 @@
 // constants won't change. They're used here to 
 // set pin numbers:
 
-#include <PinChangeInt.h>
-#include <PinChangeIntConfig.h>
-
-#include <digitalWriteFast.h>
 
 // include the library code:
 #include <LiquidCrystal.h>
