@@ -2,6 +2,13 @@
 
 #include <PinChangeInt.h>
 
+// include the library code:
+#include <LiquidCrystal.h>
+
+// mstimer screws with PinChangeInt
+#include <MsTimer2.h>
+
+
 /*
   Arduino based Digital Setting Circle
  
@@ -30,15 +37,6 @@
 
 // constants won't change. They're used here to 
 // set pin numbers:
-
-
-// include the library code:
-#include <LiquidCrystal.h>
-
-
-// mstimer screws with PinChangeInt
-#include <MsTimer2.h>
-
 
 // RA
 const int AZ_enc_A = 2;
@@ -69,6 +67,7 @@ volatile long ALT_pos = altRES / 2;
 
 
 // timer stuff
+// TODO should be an int? multibyte variables updated with an interrupt are dangerous
 volatile unsigned long masterCount = 0;
 volatile unsigned long oldCount = 0;
 
