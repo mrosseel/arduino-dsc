@@ -70,6 +70,7 @@ volatile long ALT_pos = altRES / 2;
 // TODO should be an int? multibyte variables updated with an interrupt are dangerous
 volatile unsigned long masterCount = 0;
 volatile unsigned long oldCount = 0;
+volatile char oldInChar = '0';
 
 void timerRoutine() {
   masterCount += 10;
@@ -106,6 +107,7 @@ void setup() {
   pinMode(10, OUTPUT);
   analogWrite(10, 10);  // default LCD backlight brightness
   lcd.begin(16, 2);
+  lcd.noCursor();
 
   // 10ms period
   MsTimer2::set(10, timerRoutine);
@@ -156,26 +158,30 @@ void loop() {
 
   char inchar;
 
-  // update every so often..
-  if ((masterCount - oldCount) > 250) {
-    lcd.setCursor(0, 0);
-    printEncoderValue(AZ_pos, HIGH, HIGH);
-    lcd.setCursor(8, 0);
-    printEncoderValue(ALT_pos, HIGH, HIGH);
-
-    lcd.setCursor(0, 1);
-    lcd.print(masterCount);
-    oldCount = masterCount;
-  }
-
-  if (!Serial.available())
+  while (!Serial.available())
   {
     delay(10);
+    // update every so often..
+    if ((masterCount - oldCount) > 250) {
+      lcd.setCursor(0, 0);
+      printEncoderValue(AZ_pos, HIGH, HIGH);
+      lcd.setCursor(8, 0);
+      printEncoderValue(ALT_pos, HIGH, HIGH);
+      //    lcd.setCursor(0, 1);
+      //    lcd.print(masterCount);
+      oldCount = masterCount;
+    }
   }
+
   inchar = Serial.read();
+      lcd.setCursor(0, 1);
+      lcd.print(char(inchar));
 
   // throw away rest of command - we don't need it
   Serial.flush();
+
+  // for display purposes
+  oldInChar = inchar;
 
   if (inchar == 'Q')
   {
@@ -321,6 +327,7 @@ void printHexEncoderValue(long val)
 
   return;
 }
+
 
 
 
