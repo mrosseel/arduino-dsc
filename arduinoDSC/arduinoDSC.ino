@@ -70,7 +70,7 @@ volatile long ALT_pos = altRES / 2;
 // TODO should be an int? multibyte variables updated with an interrupt are dangerous
 volatile unsigned long masterCount = 0;
 volatile unsigned long oldCount = 0;
-volatile char oldInChar = '0';
+String commandLine = ".";
 
 void timerRoutine() {
   masterCount += 10;
@@ -167,21 +167,18 @@ void loop() {
       printEncoderValue(AZ_pos, HIGH, HIGH);
       lcd.setCursor(8, 0);
       printEncoderValue(ALT_pos, HIGH, HIGH);
-      //    lcd.setCursor(0, 1);
-      //    lcd.print(masterCount);
+      lcd.setCursor(0, 1);
+      lcd.print(commandLine);
       oldCount = masterCount;
     }
   }
 
   inchar = Serial.read();
-      lcd.setCursor(0, 1);
-      lcd.print(char(inchar));
 
-  // throw away rest of command - we don't need it
-  Serial.flush();
-
-  // for display purposes
-  oldInChar = inchar;
+  // build a history of commands sent to this sketch
+  if(inchar != '\r' && inchar != '\n') {
+  commandLine += inchar;
+  }
 
   if (inchar == 'Q')
   {
@@ -238,7 +235,7 @@ void loop() {
     // dave eks error command
     Serial.print("00");
   } 
-  else if (inchar == 'h')
+  else if (inchar == 'h' || inchar == 'H')
   {
     // report resolution in Dave Eks format
     Serial.write(0xA0);
@@ -263,56 +260,51 @@ void loop() {
   {
     beenAligned = 1;
   }
+  
+  Serial.flush();
 }
 
 
 // print encoder value with leading zeros
-void printEncoderValue(long val, bool lead, bool toLCD)
+void printEncoderValue(long val, bool outputLeadingSign, bool toLCD)
 {
-  unsigned long aval; 
-
-  if (lead) {
-    if (!toLCD) {
+  unsigned long aval = abs(val);
+  
+  if (outputLeadingSign) {
       if (val < 0)
-        Serial.print("-");
+        printToLCDOrSerial(toLCD, "-");
       else
-        Serial.print("+");
-    } 
-    else {
-      if (val < 0)
-        lcd.print("-");
-      else
-        lcd.print("+");
-    }      
+        printToLCDOrSerial(toLCD, "+");       
   }
-
-  aval = abs(val);
-
-  if (!toLCD) {
+ 
     if (aval < 10) 
-      Serial.print("0000");
+      printToLCDOrSerial(toLCD, "0000");
     else if (aval < 100)
-      Serial.print("000");
+      printToLCDOrSerial(toLCD, "000");
     else if (aval < 1000)
-      Serial.print("00");
+      printToLCDOrSerial(toLCD, "00");
     else if (aval < 10000) 
-      Serial.print("0");
+      printToLCDOrSerial(toLCD, "0");
 
-    Serial.print(aval);  
-  } 
-  else {
-    if (aval < 10) 
-      lcd.print("0000");
-    else if (aval < 100)
-      lcd.print("000");
-    else if (aval < 1000)
-      lcd.print("00");
-    else if (aval < 10000) 
-      lcd.print("0");
-
-    lcd.print(aval);  
-  }    
+    printToLCDOrSerial(toLCD, aval);  
 }
+
+void printToLCDOrSerial(bool toLCD, char* value) {
+  if(toLCD) {
+    lcd.print(value);
+  } else {
+    Serial.print(value);
+  }
+}
+
+void printToLCDOrSerial(bool toLCD, long value) {
+  if(toLCD) {
+    lcd.print(value);
+  } else {
+    Serial.print(value);
+  }
+}
+
 
 void printHexEncoderValue(long val)
 {
