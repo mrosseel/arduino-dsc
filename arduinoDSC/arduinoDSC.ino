@@ -160,7 +160,7 @@ void loop() {
 
   while (!Serial.available())
   {
-    delay(10);
+    //delay(10);
     // update every so often..
     if ((masterCount - oldCount) > 250) {
       lcd.setCursor(0, 0);
@@ -177,63 +177,63 @@ void loop() {
 
   // build a history of commands sent to this sketch
   if(inchar != '\r' && inchar != '\n') {
-  commandLine += inchar;
+     commandLine += inchar;
   }
 
   if (inchar == 'Q')
   {
     printEncoderValue(AZ_pos, HIGH, LOW);
-    Serial.print("\t");
+    printToSerial("\t");
     printEncoderValue(ALT_pos, HIGH, LOW);
-    Serial.print("\r");
+    printToSerial("\r");
   }
   else if (inchar == 'R' || inchar == 'Z' || inchar == 'I' || inchar == 'z')
   {
     // ignore command - just return proper code
     if (inchar == 'R' || inchar == 'I')  
-      Serial.print("R");
+      printToSerial("R");
     else if (inchar == 'Z')
-      Serial.print("*"); 
+      printToSerial("*"); 
     else if (inchar == 'z')
-      Serial.print("r");
+      printToSerial("r");
   }
   else if (inchar == 'r') 
   {
     // print out resolution - in future this may be configurable
     printEncoderValue(azRES, LOW, LOW);
-    Serial.print("\t");
+    printToSerial("\t");
     printEncoderValue(altRES, LOW, LOW);
-    Serial.print("\r");
+    printToSerial("\r");
 
   }
   else if (inchar == 'V')
   {
     //version
-    Serial.print("V 1.0.2\r");
+    printToSerial("V 1.0.2\r");
   }
   else if (inchar == 'T')
   {
     // test mode - output resolutions and error count
     printEncoderValue(azRES, LOW, LOW);
-    Serial.print(",");
+    printToSerial(",");
     printEncoderValue(altRES, LOW, LOW);
-    Serial.print(",00000\r");
+    printToSerial(",00000\r");
   }
   else if (inchar == 'q')
   {
     // error count
-    Serial.print("00000\r");
+    printToSerial("00000\r");
   }
   else if (inchar == 'P')
   {
     // encoder power up
-    Serial.print("P");
+    printToSerial("P");
   }
   else if (inchar == 'p')
   {
     // 
     // dave eks error command
-    Serial.print("00");
+    printToSerial("00");
   } 
   else if (inchar == 'h' || inchar == 'H')
   {
@@ -252,13 +252,15 @@ void loop() {
   else if (inchar == 'a')
   {
     if (beenAligned)
-      Serial.print("Y");
+      printToSerial("Y");
     else
-      Serial.print("N");
+      printToSerial("N");
   }
   else if (inchar == 'A')
   {
     beenAligned = 1;
+  } else {
+    commandLine+="?"; 
   }
   
   Serial.flush();
@@ -289,19 +291,47 @@ void printEncoderValue(long val, bool outputLeadingSign, bool toLCD)
     printToLCDOrSerial(toLCD, aval);  
 }
 
+void printToSerial(char* toPrint) {
+  printToSerial(toPrint, true);
+}
+
+void printToSerial(long toPrint) {
+  printToSerial(toPrint, true);
+}
+
+
+void printToSerial(char* toPrint, bool log) {
+  if(log) {
+    commandLine += toPrint;
+  }
+  printToSerial(toPrint);
+}
+
+void printToSerial(long toPrint, bool log) {
+  if(log) {
+    commandLine += toPrint;
+  }
+  printToSerial(toPrint);
+}
+
+
+
 void printToLCDOrSerial(bool toLCD, char* value) {
   if(toLCD) {
     lcd.print(value);
   } else {
-    Serial.print(value);
+    printToSerial(value);
   }
 }
+
+
+
 
 void printToLCDOrSerial(bool toLCD, long value) {
   if(toLCD) {
     lcd.print(value);
   } else {
-    Serial.print(value);
+    printToSerial(value);
   }
 }
 
@@ -314,14 +344,14 @@ void printHexEncoderValue(long val)
 
   low = val - high*256;
 
-  Serial.print(low, HEX);
-  Serial.print(high, HEX);
+  printToSerial(low, HEX);
+  printToSerial(high, HEX);
 
   return;
 }
 
 
-
+// oeiuoei
 
 
 
