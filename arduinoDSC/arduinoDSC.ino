@@ -160,7 +160,7 @@ void loop() {
 
   while (!Serial.available())
   {
-    //delay(10);
+    delay(10);
     // update every so often..
     if ((masterCount - oldCount) > 250) {
       lcd.setCursor(0, 0);
@@ -169,6 +169,8 @@ void loop() {
       printEncoderValue(ALT_pos, HIGH, HIGH);
       lcd.setCursor(0, 1);
       lcd.print(commandLine);
+      
+      
       oldCount = masterCount;
     }
   }
@@ -260,7 +262,7 @@ void loop() {
   {
     beenAligned = 1;
   } else {
-    commandLine+="?"; 
+    commandLine+="?MR"; 
   }
   
   Serial.flush();
@@ -302,30 +304,27 @@ void printToSerial(long toPrint) {
 
 void printToSerial(char* toPrint, bool log) {
   if(log) {
-    commandLine += toPrint;
+    commandLine += *toPrint;
   }
-  printToSerial(toPrint);
+  Serial.print(*toPrint);
 }
 
 void printToSerial(long toPrint, bool log) {
   if(log) {
     commandLine += toPrint;
   }
-  printToSerial(toPrint);
+  Serial.print(toPrint);
 }
 
 
 
 void printToLCDOrSerial(bool toLCD, char* value) {
   if(toLCD) {
-    lcd.print(value);
+    lcd.print(*value);
   } else {
     printToSerial(value);
   }
 }
-
-
-
 
 void printToLCDOrSerial(bool toLCD, long value) {
   if(toLCD) {
