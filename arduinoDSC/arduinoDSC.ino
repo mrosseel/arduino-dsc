@@ -8,6 +8,7 @@
 // mstimer screws with PinChangeInt
 #include <MsTimer2.h>
 
+#define USE_LCD
 
 /*
   Arduino based Digital Setting Circle
@@ -52,8 +53,8 @@ volatile bool isUpdated = LOW;
 
 
 // encoder resolution - some cheap encoders have lower tics on the DEC (like my JMI's!)
-const int altRES = 10000;    // resolution of encoders
-const int azRES = 10000;    // resolution of encoders
+int altRES = 8192;    // resolution of encoders
+int azRES = 8192;    // resolution of encoders
 
 char beenAligned = 0;  
 
@@ -70,7 +71,7 @@ volatile long ALT_pos = altRES / 2;
 // TODO should be an int? multibyte variables updated with an interrupt are dangerous
 volatile unsigned long masterCount = 0;
 volatile unsigned long oldCount = 0;
-String commandLine = ".";
+String commandLine = "";
 
 void timerRoutine() {
   masterCount += 10;
@@ -164,13 +165,12 @@ void loop() {
     // update every so often..
     if ((masterCount - oldCount) > 250) {
       lcd.setCursor(0, 0);
-      printEncoderValue(AZ_pos, HIGH, HIGH);
+      lcd.print(getEncoderValue(AZ_pos, HIGH));
       lcd.setCursor(8, 0);
-      printEncoderValue(ALT_pos, HIGH, HIGH);
+      lcd.print(getEncoderValue(ALT_pos, HIGH));
       lcd.setCursor(0, 1);
       lcd.print(commandLine);
-      
-      
+
       oldCount = masterCount;
     }
   }
@@ -179,25 +179,51 @@ void loop() {
 
   // build a history of commands sent to this sketch
   if(inchar != '\r' && inchar != '\n') {
-     commandLine += inchar;
+    commandLine.concat(inchar);
   }
 
   if (inchar == 'Q')
   {
-    printEncoderValue(AZ_pos, HIGH, LOW);
-    printToSerial("\t");
-    printEncoderValue(ALT_pos, HIGH, LOW);
-    printToSerial("\r");
+    printToSerial(new String("test"));//getEncoderValue(AZ_pos, HIGH));
+//    printToSerial("\t");
+//    printToSerial(getEncoderValue(ALT_pos, HIGH));
+//    printToSerial("\r");
   }
-  else if (inchar == 'R' || inchar == 'Z' || inchar == 'I' || inchar == 'z')
+  else if (inchar == 'R')
   {
-    // ignore command - just return proper code
-    if (inchar == 'R' || inchar == 'I')  
+    if (inchar == 'R')   {
+      // first comes azimuth, then altitude (project pluto)
+      String resolution1 = "";
+      String resolution2 = ""; 
+      if(Serial.available() > 0) {
+        inchar = Serial.read();
+      }
+      while(Serial.available() > 0 && inchar != '\t') {
+        resolution1.concat(inchar);
+        inchar = Serial.read();
+      }
+      while(Serial.available() > 0 && inchar != '\r') {
+        inchar = Serial.read();
+        resolution2.concat(inchar);
+      }      
+      commandLine+="." + resolution1 + "--" + resolution2 + ".";
+      setAzRes(resolution1.toInt());
+      setAltRes(resolution2.toInt());
       printToSerial("R");
-    else if (inchar == 'Z')
+    }
+  }
+  // ignore command - just return proper code
+  else if(inchar == 'Z' || inchar == 'I' || inchar == 'z') {
+    if(inchar == 'I') {
+      printToSerial("R");
+    }
+    else if (inchar == 'Z') {
       printToSerial("*"); 
-    else if (inchar == 'z')
+    }
+    else if (inchar == 'z') {
       printToSerial("r");
+    }
+
   }
   else if (inchar == 'r') 
   {
@@ -261,77 +287,71 @@ void loop() {
   else if (inchar == 'A')
   {
     beenAligned = 1;
-  } else {
-    commandLine+="?MR"; 
+  } 
+  else {
+    addOutputToCommandLine("?"); 
   }
-  
+
   Serial.flush();
 }
 
+void addOutputToCommandLine(char* output) {
+  commandLine +="." + *output;  
+}
+
+String getEncoderValue(long val, bool outputLeadingSign) {
+  
+  unsigned long aval = abs(val);
+  String result = "";
+
+  if (outputLeadingSign) {
+    if (val < 0)
+      result+="-";
+    else
+      result+="+";       
+  }
+
+  if (aval < 10) 
+    result+="0000";
+  else if (aval < 100)
+    result+="000";
+  else if (aval < 1000)
+    result+="00";
+  else if (aval < 10000) 
+    result+="0";
+
+  result+=aval;
+  return result;  
+}
 
 // print encoder value with leading zeros
 void printEncoderValue(long val, bool outputLeadingSign, bool toLCD)
 {
-  unsigned long aval = abs(val);
-  
-  if (outputLeadingSign) {
-      if (val < 0)
-        printToLCDOrSerial(toLCD, "-");
-      else
-        printToLCDOrSerial(toLCD, "+");       
-  }
- 
-    if (aval < 10) 
-      printToLCDOrSerial(toLCD, "0000");
-    else if (aval < 100)
-      printToLCDOrSerial(toLCD, "000");
-    else if (aval < 1000)
-      printToLCDOrSerial(toLCD, "00");
-    else if (aval < 10000) 
-      printToLCDOrSerial(toLCD, "0");
-
-    printToLCDOrSerial(toLCD, aval);  
+  printToSerial(getEncoderValue(val,outputLeadingSign));  
 }
+
+void printToSerial(String toPrint) {
+  #ifdef USE_LCD
+    commandLine += toPrint;
+  #endif
+  char str[toPrint.length()];
+  toPrint.toCharArray(str, toPrint.length());
+  Serial.print(str);
+}
+
 
 void printToSerial(char* toPrint) {
-  printToSerial(toPrint, true);
-}
-
-void printToSerial(long toPrint) {
-  printToSerial(toPrint, true);
-}
-
-
-void printToSerial(char* toPrint, bool log) {
-  if(log) {
+  #ifdef USE_LCD
     commandLine += *toPrint;
-  }
+  #endif
   Serial.print(*toPrint);
 }
 
-void printToSerial(long toPrint, bool log) {
-  if(log) {
+void printToSerial(long toPrint) {
+  #ifdef USE_LCD
     commandLine += toPrint;
-  }
+  #endif
   Serial.print(toPrint);
-}
-
-
-
-void printToLCDOrSerial(bool toLCD, char* value) {
-  if(toLCD) {
-    lcd.print(*value);
-  } else {
-    printToSerial(value);
-  }
-}
-
-void printToLCDOrSerial(bool toLCD, long value) {
-  if(toLCD) {
-    lcd.print(value);
-  } else {
-    printToSerial(value);
-  }
 }
 
 
@@ -343,14 +363,25 @@ void printHexEncoderValue(long val)
 
   low = val - high*256;
 
-  printToSerial(low, HEX);
-  printToSerial(high, HEX);
+  Serial.print(low, HEX);
+  Serial.print(high, HEX);
+
+//  printToSerial(low, HEX);
+//  printToSerial(high, HEX);
 
   return;
 }
 
+void setAltRes(int newAltRes) {
+  altRES = newAltRes;    // resolution of encoders
+  ALT_pos = altRES / 2; 
+}
 
-// oeiuoei
+void setAzRes(int newAzRes) {
+  azRES = newAzRes;    // resolution of encoders
+  AZ_pos = azRES / 2; 
+}
+
 
 
 

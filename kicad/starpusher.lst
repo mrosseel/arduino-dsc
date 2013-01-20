@@ -1,0 +1,49 @@
+eeschema (2012-01-19 BZR 3256)-stable  >> Creation date: 5-1-2013 15:55:29
+
+#Cmp ( volgorde = Referentie )
+| C1         100nF       
+| C2         22nF        
+| C3         22nF        
+| C4         10uF        
+| C5         68uF        
+| D1         MBRA140     
+| IC1        ATMEGA88-P  
+| K1         CONN_3      
+| L1         47uH        
+| P1         CONN_2      
+| P2         CONN_3X2    
+| P3         CONN_6      
+| P4         CONN_6      
+| P5         CONN_6      
+| R1         10K         
+| R2         10K         
+| R3         20K         
+| R4         20K         
+| U1         NCP1402     
+| X1         16Mhz       
+#Einde Cmp
+
+#Cmp ( volgorde = Waarde )
+| 100nF        C1        
+| 10K          R1        
+| 10K          R2        
+| 10uF         C4        
+| 16Mhz        X1        
+| 20K          R3        
+| 20K          R4        
+| 22nF         C2        
+| 22nF         C3        
+| 47uH         L1        
+| 68uF         C5        
+| ATMEGA88-P   IC1       
+| CONN_2       P1        
+| CONN_3       K1        
+| CONN_3X2     P2        
+| CONN_6       P3        
+| CONN_6       P4        
+| CONN_6       P5        
+| MBRA140      D1        
+| NCP1402      U1        
+#Einde Cmp
+
+#Einde Lijst
