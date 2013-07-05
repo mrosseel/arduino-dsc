@@ -1,4 +1,4 @@
-//#define USE_LCD
+#define USE_LCD
 
 #include <digitalWriteFast.h>
 
@@ -22,7 +22,7 @@
  
  Changes in v1.0.1:
  - updated to compile on Arduino 1.0
- - full quadrature (4X) encoding via 4 virtual interrupts and PinChangeInt library - http://www.arduino.cc/playground/Main/PinChangeInt
+ - full quadrature (4X) encodirg via 4 virtual interrupts and PinChangeInt library - http://www.arduino.cc/playground/Main/PinChangeInt
  - more efficient reading of ports via digitalWriteFast library - http://code.google.com/p/digitalwritefast/
  - fast quadrature decode based on code from Dr Rainer Hessmer - http://www.hessmer.org/blog/2011/01/30/quadrature-encoder-too-fast-for-arduino/
  - only tested on Uno R3
@@ -177,14 +177,19 @@ void loop() {
       lcd.setCursor(8, 0);
       lcd.print(getEncoderValue(ALT_pos, HIGH));
       lcd.setCursor(0, 1);
-      lcd.print(commandLine);
+      if(commandLine.length() < 16) {
+        lcd.print(commandLine);
+      } else {
+        int length = commandLine.length();
+        lcd.print(commandLine.substring(length-16));
+      }
       #endif
       oldCount = masterCount;
     }
   }
 
   inchar = Serial.read();
-
+  
   // build a history of commands sent to this sketch
   if(inchar != '\r' && inchar != '\n') {
     commandLine.concat(inchar);
@@ -192,7 +197,6 @@ void loop() {
 
   if (inchar == 'Q')
   {
-//    printToSerial(new String("test"));
     printToSerial(getEncoderValue(AZ_pos, HIGH));
     printToSerial("\t");
     printToSerial(getEncoderValue(ALT_pos, HIGH));
@@ -215,9 +219,9 @@ void loop() {
         inchar = Serial.read();
         resolution2.concat(inchar);
       }      
-      commandLine+="." + resolution1 + "--" + resolution2 + ".";
-      setAzRes(resolution1.toInt());
-      setAltRes(resolution2.toInt());
+      commandLine+="." + resolution1 + "-R-" + resolution2 + ".";
+//      setAzRes(resolution1.toInt());
+//      setAltRes(resolution2.toInt());
       printToSerial("R");
     }
   }
@@ -246,7 +250,7 @@ void loop() {
   else if (inchar == 'V')
   {
     //version
-    printToSerial("V 1.0.2\r");
+    printToSerial("W1.0.2\r");
   }
   else if (inchar == 'T')
   {
