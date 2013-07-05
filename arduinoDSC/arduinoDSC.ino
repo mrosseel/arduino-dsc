@@ -1,14 +1,17 @@
+//#define USE_LCD
+
 #include <digitalWriteFast.h>
 
 #include <PinChangeInt.h>
 
-// include the library code:
-#include <LiquidCrystal.h>
+#ifdef USE_LCD
+  // include the library code:
+  #include <LiquidCrystal.h>
+#endif
 
 // mstimer screws with PinChangeInt
 #include <MsTimer2.h>
 
-#define USE_LCD
 
 /*
   Arduino based Digital Setting Circle
@@ -77,9 +80,10 @@ void timerRoutine() {
   masterCount += 10;
 }
 
-
+#ifdef USE_LCD
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+#endif
 
 void setup() {
 
@@ -107,8 +111,10 @@ void setup() {
   // backlight control
   pinMode(10, OUTPUT);
   analogWrite(10, 10);  // default LCD backlight brightness
+  #ifdef USE_LCD
   lcd.begin(16, 2);
   lcd.noCursor();
+  #endif
 
   // 10ms period
   MsTimer2::set(10, timerRoutine);
@@ -162,15 +168,17 @@ void loop() {
   while (!Serial.available())
   {
     delay(10);
+    
     // update every so often..
     if ((masterCount - oldCount) > 250) {
+      #ifdef USE_LCD
       lcd.setCursor(0, 0);
       lcd.print(getEncoderValue(AZ_pos, HIGH));
       lcd.setCursor(8, 0);
       lcd.print(getEncoderValue(ALT_pos, HIGH));
       lcd.setCursor(0, 1);
       lcd.print(commandLine);
-
+      #endif
       oldCount = masterCount;
     }
   }
@@ -184,10 +192,11 @@ void loop() {
 
   if (inchar == 'Q')
   {
-    printToSerial(new String("test"));//getEncoderValue(AZ_pos, HIGH));
-//    printToSerial("\t");
-//    printToSerial(getEncoderValue(ALT_pos, HIGH));
-//    printToSerial("\r");
+//    printToSerial(new String("test"));
+    printToSerial(getEncoderValue(AZ_pos, HIGH));
+    printToSerial("\t");
+    printToSerial(getEncoderValue(ALT_pos, HIGH));
+    printToSerial("\r");
   }
   else if (inchar == 'R')
   {
