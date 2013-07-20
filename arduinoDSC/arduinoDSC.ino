@@ -194,7 +194,7 @@ void loop() {
   inchar = Serial.read();
 
   // build a history of commands sent to this sketch
-  if(inchar != '\r' && inchar != '\n') {
+  if(USE_LCD && inchar != '\r' && inchar != '\n') {
     commandLine.concat(inchar);
   }
 
@@ -203,7 +203,7 @@ void loop() {
     printToSerial(getEncoderValue(AZ_pos, HIGH));
     printToSerial("\t");
     printToSerial(getEncoderValue(ALT_pos, HIGH));
-    printToSerial("\r");
+    //printToSerial("\r");
   }
   else if (inchar == 'R')
   {
