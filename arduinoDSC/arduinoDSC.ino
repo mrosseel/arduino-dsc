@@ -17,6 +17,10 @@
 /*
   Arduino based Digital Setting Circle
  
+ Mike Rosseel 2013-07-22
+ 
+ - make more compatible with http://eksfiles.net/digital-setting-circles/circuit-description/ protocol description, implemented 'h' and 'y'. 'p' always returns 0, 'z' is not implemented
+ 
  Orlando Andico 2011-12-24
  
  <orly.andico at gmail.com>
@@ -193,48 +197,54 @@ void loop() {
 
   inchar = Serial.read();
 
+  #ifdef USE_LCD
   // build a history of commands sent to this sketch
-  if(USE_LCD && inchar != '\r' && inchar != '\n') {
+  if(inchar != '\r' && inchar != '\n') {
     commandLine.concat(inchar);
   }
+  #endif
 
   if (inchar == 'Q')
   {
     printToSerial(getEncoderValue(AZ_pos, HIGH));
     printToSerial("\t");
     printToSerial(getEncoderValue(ALT_pos, HIGH));
-    //printToSerial("\r");
+    printToSerial("\r");
   }
   else if (inchar == 'R')
   {
       // first comes azimuth, then altitude (project pluto)
-      /*
-      String resolution1 = "";
-      String resolution2 = ""; 
-      if(Serial.available() > 0) {
+      String resolution1 = String("");
+      String resolution2 = String(""); 
+  
+      while(Serial.available() > 0) {
         inchar = Serial.read();
+        Serial.print(inchar);
+        if(inchar == '\t') { break; }
+        resolution1.concat(inchar);        
       }
-      while(Serial.available() > 0 && inchar != '\t') {
-        resolution1.concat(inchar);
+     
+      while(Serial.available() > 0) {
         inchar = Serial.read();
-      }
-      while(Serial.available() > 0 && inchar != '\r') {
-        inchar = Serial.read();
-        resolution2.concat(inchar);
+        Serial.print(inchar);  
+        if(inchar == '\r') { break; }
+          resolution2.concat(inchar);    
       }      
       commandLine+="." + resolution1 + "--" + resolution2 + ".";
       setAzRes(resolution1.toInt());
       setAltRes(resolution2.toInt());
       printToSerial("R");
-      */
-    
+//      Serial.print('\t');
+//       Serial.print(resolution1);
+//       Serial.print('\t');
+//        Serial.print(resolution2);
   }
   // ignore command - just return proper code
   else if(inchar == 'Z' || inchar == 'I' || inchar == 'z') {
     if(inchar == 'I') {
       printToSerial("R");
     }
-    else if (inchar == 'Z') {
+    else if (inchar == 'Z') {                                                                                                                                                                             
       printToSerial("*"); 
     }
     else if (inchar == 'z') {
@@ -244,7 +254,7 @@ void loop() {
   }
   else if (inchar == 'r') 
   {
-    // print out resolution - in future this may be configurable
+    // print out resolution
     printEncoderValue(azRES, LOW);
     printToSerial("\t");
     printEncoderValue(altRES, LOW);
@@ -283,10 +293,8 @@ void loop() {
   else if (inchar == 'h' || inchar == 'H')
   {
     // report resolution in Dave Eks format
-    Serial.write(0xA0);
-    Serial.write(0x0F);
-    Serial.write(0xA0);
-    Serial.write(0x0F);
+    printHexEncoderValue(altRES);
+    printHexEncoderValue(azRES);
   }
   else if (inchar == 'y')
   {
@@ -364,14 +372,14 @@ void printHexEncoderValue(long val)
 
   low = val - high*256;
 
+  if (low<0x10) {Serial.print("0");} 
   Serial.print(low, HEX);
+  if (high<0x10) {Serial.print("0");} 
   Serial.print(high, HEX);
-
-//  printToSerial(low, HEX);
-//  printToSerial(high, HEX);
 
   return;
 }
+
 
 void setAltRes(int newAltRes) {
   altRES = newAltRes;    // resolution of encoders
