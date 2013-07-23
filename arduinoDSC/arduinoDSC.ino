@@ -5,16 +5,28 @@
 #include <PinChangeInt.h>
 
 #ifdef USE_LCD
+<<<<<<< HEAD
   // include the library code:
+=======
+  // only used when testing with the LCD screen
+>>>>>>> debugging
   #include <LiquidCrystal.h>
 #endif
 
 // mstimer screws with PinChangeInt
 #include <MsTimer2.h>
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> debugging
 
 /*
   Arduino based Digital Setting Circle
+ 
+ Mike Rosseel 2013-07-22
+ 
+ - make more compatible with http://eksfiles.net/digital-setting-circles/circuit-description/ protocol description, implemented 'h' and 'y'. 'p' always returns 0, 'z' is not implemented
  
  Orlando Andico 2011-12-24
  
@@ -75,6 +87,7 @@ volatile long ALT_pos = altRES / 2;
 volatile unsigned long masterCount = 0;
 volatile unsigned long oldCount = 0;
 String commandLine = "";
+String debugCommandLine = "";
 
 void timerRoutine() {
   masterCount += 10;
@@ -108,14 +121,19 @@ void setup() {
 
   Serial.begin(9600);
 
+#ifdef USE_LCD
   // backlight control
   pinMode(10, OUTPUT);
   analogWrite(10, 10);  // default LCD backlight brightness
   #ifdef USE_LCD
   lcd.begin(16, 2);
   lcd.noCursor();
+<<<<<<< HEAD
   #endif
 
+=======
+#endif
+>>>>>>> debugging
   // 10ms period
   MsTimer2::set(10, timerRoutine);
   MsTimer2::start();
@@ -164,11 +182,16 @@ void azFuncB() {
 void loop() { 
 
   char inchar;
+  int positionCounter = 0;
 
   while (!Serial.available())
   {
     delay(10);
     
+<<<<<<< HEAD
+=======
+    #ifdef USE_LCD
+>>>>>>> debugging
     // update every so often..
     if ((masterCount - oldCount) > 250) {
       #ifdef USE_LCD
@@ -177,6 +200,7 @@ void loop() {
       lcd.setCursor(8, 0);
       lcd.print(getEncoderValue(ALT_pos, HIGH));
       lcd.setCursor(0, 1);
+<<<<<<< HEAD
       if(commandLine.length() < 16) {
         lcd.print(commandLine);
       } else {
@@ -184,16 +208,32 @@ void loop() {
         lcd.print(commandLine.substring(length-16));
       }
       #endif
+=======
+      //debugCommandLine.concat(commandLine.length());
+      if(commandLine.length() > 16) {
+        commandLine = commandLine.substring(1);        
+      }
+      
+      lcd.print(commandLine.substring(0, 16));
+
+>>>>>>> debugging
       oldCount = masterCount;
     }
+    #endif
   }
 
   inchar = Serial.read();
+<<<<<<< HEAD
   
+=======
+
+  #ifdef USE_LCD
+>>>>>>> debugging
   // build a history of commands sent to this sketch
   if(inchar != '\r' && inchar != '\n') {
     commandLine.concat(inchar);
   }
+  #endif
 
   if (inchar == 'Q')
   {
@@ -204,33 +244,38 @@ void loop() {
   }
   else if (inchar == 'R')
   {
-    if (inchar == 'R')   {
       // first comes azimuth, then altitude (project pluto)
-      String resolution1 = "";
-      String resolution2 = ""; 
-      if(Serial.available() > 0) {
+      String resolution1 = String("");
+      String resolution2 = String(""); 
+  
+      while(Serial.available() > 0) {
         inchar = Serial.read();
+        Serial.print(inchar);
+        if(inchar == '\t') { break; }
+        resolution1.concat(inchar);        
       }
-      while(Serial.available() > 0 && inchar != '\t') {
-        resolution1.concat(inchar);
+     
+      while(Serial.available() > 0) {
         inchar = Serial.read();
-      }
-      while(Serial.available() > 0 && inchar != '\r') {
-        inchar = Serial.read();
-        resolution2.concat(inchar);
+        Serial.print(inchar);  
+        if(inchar == '\r') { break; }
+          resolution2.concat(inchar);    
       }      
       commandLine+="." + resolution1 + "-R-" + resolution2 + ".";
 //      setAzRes(resolution1.toInt());
 //      setAltRes(resolution2.toInt());
       printToSerial("R");
-    }
+//      Serial.print('\t');
+//       Serial.print(resolution1);
+//       Serial.print('\t');
+//        Serial.print(resolution2);
   }
   // ignore command - just return proper code
   else if(inchar == 'Z' || inchar == 'I' || inchar == 'z') {
     if(inchar == 'I') {
       printToSerial("R");
     }
-    else if (inchar == 'Z') {
+    else if (inchar == 'Z') {                                                                                                                                                                             
       printToSerial("*"); 
     }
     else if (inchar == 'z') {
@@ -240,24 +285,28 @@ void loop() {
   }
   else if (inchar == 'r') 
   {
-    // print out resolution - in future this may be configurable
-    printEncoderValue(azRES, LOW, LOW);
+    // print out resolution
+    printEncoderValue(azRES, LOW);
     printToSerial("\t");
-    printEncoderValue(altRES, LOW, LOW);
+    printEncoderValue(altRES, LOW);
     printToSerial("\r");
 
   }
   else if (inchar == 'V')
   {
     //version
+<<<<<<< HEAD
     printToSerial("W1.0.2\r");
+=======
+    printToSerial("V 1.0.3\r");
+>>>>>>> debugging
   }
   else if (inchar == 'T')
   {
     // test mode - output resolutions and error count
-    printEncoderValue(azRES, LOW, LOW);
+    printEncoderValue(azRES, LOW);
     printToSerial(",");
-    printEncoderValue(altRES, LOW, LOW);
+    printEncoderValue(altRES, LOW);
     printToSerial(",00000\r");
   }
   else if (inchar == 'q')
@@ -279,10 +328,8 @@ void loop() {
   else if (inchar == 'h' || inchar == 'H')
   {
     // report resolution in Dave Eks format
-    Serial.write(0xA0);
-    Serial.write(0x0F);
-    Serial.write(0xA0);
-    Serial.write(0x0F);
+    printHexEncoderValue(altRES);
+    printHexEncoderValue(azRES);
   }
   else if (inchar == 'y')
   {
@@ -305,7 +352,7 @@ void loop() {
     addOutputToCommandLine("?"); 
   }
 
-  Serial.flush();
+  //Serial.flush();
 }
 
 void addOutputToCommandLine(char* output) {
@@ -338,7 +385,7 @@ String getEncoderValue(long val, bool outputLeadingSign) {
 }
 
 // print encoder value with leading zeros
-void printEncoderValue(long val, bool outputLeadingSign, bool toLCD)
+void printEncoderValue(long val, bool outputLeadingSign)
 {
   printToSerial(getEncoderValue(val,outputLeadingSign));  
 }
@@ -347,23 +394,7 @@ void printToSerial(String toPrint) {
   #ifdef USE_LCD
     commandLine += toPrint;
   #endif
-  char str[toPrint.length()];
-  toPrint.toCharArray(str, toPrint.length());
-  Serial.print(str);
-}
 
-
-void printToSerial(char* toPrint) {
-  #ifdef USE_LCD
-    commandLine += *toPrint;
-  #endif
-  Serial.print(*toPrint);
-}
-
-void printToSerial(long toPrint) {
-  #ifdef USE_LCD
-    commandLine += toPrint;
-  #endif
   Serial.print(toPrint);
 }
 
@@ -376,14 +407,14 @@ void printHexEncoderValue(long val)
 
   low = val - high*256;
 
+  if (low<0x10) {Serial.print("0");} 
   Serial.print(low, HEX);
+  if (high<0x10) {Serial.print("0");} 
   Serial.print(high, HEX);
-
-//  printToSerial(low, HEX);
-//  printToSerial(high, HEX);
 
   return;
 }
+
 
 void setAltRes(int newAltRes) {
   altRES = newAltRes;    // resolution of encoders
