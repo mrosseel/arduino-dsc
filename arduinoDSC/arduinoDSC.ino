@@ -5,21 +5,12 @@
 #include <PinChangeInt.h>
 
 #ifdef USE_LCD
-<<<<<<< HEAD
-  // include the library code:
-=======
   // only used when testing with the LCD screen
->>>>>>> debugging
   #include <LiquidCrystal.h>
 #endif
 
 // mstimer screws with PinChangeInt
 #include <MsTimer2.h>
-
-<<<<<<< HEAD
-=======
-
->>>>>>> debugging
 
 /*
   Arduino based Digital Setting Circle
@@ -125,15 +116,9 @@ void setup() {
   // backlight control
   pinMode(10, OUTPUT);
   analogWrite(10, 10);  // default LCD backlight brightness
-  #ifdef USE_LCD
   lcd.begin(16, 2);
   lcd.noCursor();
-<<<<<<< HEAD
-  #endif
-
-=======
 #endif
->>>>>>> debugging
   // 10ms period
   MsTimer2::set(10, timerRoutine);
   MsTimer2::start();
@@ -188,10 +173,7 @@ void loop() {
   {
     delay(10);
     
-<<<<<<< HEAD
-=======
     #ifdef USE_LCD
->>>>>>> debugging
     // update every so often..
     if ((masterCount - oldCount) > 250) {
       #ifdef USE_LCD
@@ -200,15 +182,6 @@ void loop() {
       lcd.setCursor(8, 0);
       lcd.print(getEncoderValue(ALT_pos, HIGH));
       lcd.setCursor(0, 1);
-<<<<<<< HEAD
-      if(commandLine.length() < 16) {
-        lcd.print(commandLine);
-      } else {
-        int length = commandLine.length();
-        lcd.print(commandLine.substring(length-16));
-      }
-      #endif
-=======
       //debugCommandLine.concat(commandLine.length());
       if(commandLine.length() > 16) {
         commandLine = commandLine.substring(1);        
@@ -216,19 +189,14 @@ void loop() {
       
       lcd.print(commandLine.substring(0, 16));
 
->>>>>>> debugging
       oldCount = masterCount;
     }
     #endif
   }
 
   inchar = Serial.read();
-<<<<<<< HEAD
-  
-=======
 
   #ifdef USE_LCD
->>>>>>> debugging
   // build a history of commands sent to this sketch
   if(inchar != '\r' && inchar != '\n') {
     commandLine.concat(inchar);
@@ -295,11 +263,7 @@ void loop() {
   else if (inchar == 'V')
   {
     //version
-<<<<<<< HEAD
-    printToSerial("W1.0.2\r");
-=======
     printToSerial("V 1.0.3\r");
->>>>>>> debugging
   }
   else if (inchar == 'T')
   {
