@@ -176,7 +176,6 @@ void loop() {
     #ifdef USE_LCD
     // update every so often..
     if ((masterCount - oldCount) > 250) {
-      #ifdef USE_LCD
       lcd.setCursor(0, 0);
       lcd.print(getEncoderValue(AZ_pos, HIGH));
       lcd.setCursor(8, 0);
