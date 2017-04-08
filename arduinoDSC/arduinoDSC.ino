@@ -1,8 +1,8 @@
-#define USE_LCD
+//#define USE_LCD
 
-#include <digitalWriteFast.h>
+//#include <digitalWriteFast.h>
 
-#include <PinChangeInt.h>
+//#include <PinChangeInterrupt.h>
 
 #ifdef USE_LCD
   // only used when testing with the LCD screen
@@ -10,7 +10,7 @@
 #endif
 
 // mstimer screws with PinChangeInt
-#include <MsTimer2.h>
+//#include <MsTimer2.h>
 
 /*
   Arduino based Digital Setting Circle
@@ -104,11 +104,11 @@ void setup() {
   digitalWrite(AZ_enc_B, LOW);
 
   // hook interrupts off the ALT and AZ pins
-  PCintPort::attachInterrupt(ALT_enc_A, altFuncA, CHANGE);
-  PCintPort::attachInterrupt(ALT_enc_B, altFuncB, CHANGE);
+  attachInterrupt(ALT_enc_A, altFuncA, CHANGE);
+  attachInterrupt(ALT_enc_B, altFuncB, CHANGE);
 
-  PCintPort::attachInterrupt(AZ_enc_A, azFuncA, CHANGE);
-  PCintPort::attachInterrupt(AZ_enc_B, azFuncB, CHANGE);
+  attachInterrupt(AZ_enc_A, azFuncA, CHANGE);
+  attachInterrupt(AZ_enc_B, azFuncB, CHANGE);
 
   Serial.begin(9600);
 
@@ -120,15 +120,15 @@ void setup() {
   lcd.noCursor();
 #endif
   // 10ms period
-  MsTimer2::set(10, timerRoutine);
-  MsTimer2::start();
+  //MsTimer2::set(10, timerRoutine);
+  //MsTimer2::start();
 }
 
 // ################### ALTITUDE DECODING FUNCTION ###################
 
 void altFuncA() {
-  _AltEncoderASet = digitalReadFast(ALT_enc_A) == HIGH;   // read the input pin
-  _AltEncoderBSet = digitalReadFast(ALT_enc_B);   // read the input pin
+  _AltEncoderASet = digitalRead(ALT_enc_A) == HIGH;   // read the input pin
+  _AltEncoderBSet = digitalRead(ALT_enc_B);   // read the input pin
 
   ALT_pos += (_AltEncoderASet != _AltEncoderBSet) ? +1 : -1;
   isUpdated = HIGH;
@@ -136,8 +136,8 @@ void altFuncA() {
 
 
 void altFuncB() {
-  _AltEncoderASet = digitalReadFast(ALT_enc_A);   // read the input pin
-  _AltEncoderBSet = digitalReadFast(ALT_enc_B) == HIGH;   // read the input pin
+  _AltEncoderASet = digitalRead(ALT_enc_A);   // read the input pin
+  _AltEncoderBSet = digitalRead(ALT_enc_B) == HIGH;   // read the input pin
 
   ALT_pos += (_AltEncoderASet == _AltEncoderBSet) ? +1 : -1;
   isUpdated = HIGH;
@@ -147,8 +147,8 @@ void altFuncB() {
 // ################### AZIMUTH DECODING FUNCTION ###################
 
 void azFuncA() {
-  _AzEncoderASet = digitalReadFast(AZ_enc_A) == HIGH;   // read the input pin
-  _AzEncoderBSet = digitalReadFast(AZ_enc_B);   // read the input pin
+  _AzEncoderASet = digitalRead(AZ_enc_A) == HIGH;   // read the input pin
+  _AzEncoderBSet = digitalRead(AZ_enc_B);   // read the input pin
 
   AZ_pos += (_AzEncoderASet != _AzEncoderBSet) ? +1 : -1;
   isUpdated = HIGH;
@@ -156,8 +156,8 @@ void azFuncA() {
 
 
 void azFuncB() {
-  _AzEncoderASet = digitalReadFast(AZ_enc_A);   // read the input pin
-  _AzEncoderBSet = digitalReadFast(AZ_enc_B) == HIGH;   // read the input pin
+  _AzEncoderASet = digitalRead(AZ_enc_A);   // read the input pin
+  _AzEncoderBSet = digitalRead(AZ_enc_B) == HIGH;   // read the input pin
 
   AZ_pos += (_AzEncoderASet == _AzEncoderBSet) ? +1 : -1;
   isUpdated = HIGH;
