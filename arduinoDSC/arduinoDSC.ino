@@ -1,4 +1,4 @@
-//#define USE_LCD
+#define USE_LCD
 
 //#include <digitalWriteFast.h>
 
@@ -6,8 +6,17 @@
 
 #ifdef USE_LCD
   // only used when testing with the LCD screen
-  #include <LiquidCrystal.h>
+  #include <Wire.h>
+  #include "SSD1306.h"
 #endif
+
+#include "BluetoothSerial.h"
+
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+#endif
+
+BluetoothSerial SerialBT;
 
 // mstimer screws with PinChangeInt
 //#include <MsTimer2.h>
@@ -74,19 +83,17 @@ volatile long ALT_pos = altRES / 2;
 
 
 // timer stuff
-// TODO should be an int? multibyte variables updated with an interrupt are dangerous
-volatile unsigned long masterCount = 0;
-volatile unsigned long oldCount = 0;
+unsigned long startTime = millis();
 String commandLine = "";
 String debugCommandLine = "";
 
-void timerRoutine() {
-  masterCount += 10;
-}
+//void timerRoutine() {
+//  masterCount += 10;
+//}
 
 #ifdef USE_LCD
-// initialize the library with the numbers of the interface pins
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+  // initialize the library with the numbers of the interface pins
+  SSD1306 display(0x3c, 5, 4); 
 #endif
 
 void setup() {
@@ -110,14 +117,21 @@ void setup() {
   attachInterrupt(AZ_enc_A, azFuncA, CHANGE);
   attachInterrupt(AZ_enc_B, azFuncB, CHANGE);
 
-  Serial.begin(9600);
+  //Serial.begin(9600);
+  Serial.begin(115200);
+  if(!SerialBT.begin("arduinoDSC")){ //Bluetooth device name
+    Serial.println("An error occurred initializing Bluetooth");
+  }else{
+    Serial.println("The device started, now you can pair it with bluetooth!");
+  }
 
 #ifdef USE_LCD
-  // backlight control
-  pinMode(10, OUTPUT);
-  analogWrite(10, 10);  // default LCD backlight brightness
-  lcd.begin(16, 2);
-  lcd.noCursor();
+  display.init();
+  display.flipScreenVertically();
+  display.setFont(ArialMT_Plain_24);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(0, 0,"Starting ...");
+  display.display();
 #endif
   // 10ms period
   //MsTimer2::set(10, timerRoutine);
@@ -165,41 +179,55 @@ void azFuncB() {
 
 
 void loop() { 
-
   char inchar;
   int positionCounter = 0;
 
-  while (!Serial.available())
+  while (!SerialBT.available())
   {
     delay(10);
     
     #ifdef USE_LCD
     // update every so often..
-    if ((masterCount - oldCount) > 250) {
-      lcd.setCursor(0, 0);
-      lcd.print(getEncoderValue(AZ_pos, HIGH));
-      lcd.setCursor(8, 0);
-      lcd.print(getEncoderValue(ALT_pos, HIGH));
-      lcd.setCursor(0, 1);
+    if ((millis() - startTime) >= 250) {
+      startTime = millis();
+      display.clear();
+      String value = getEncoderValue(AZ_pos, HIGH);
+      value[1] = ' ';
+      display.drawString(0, 0, value);
+      value = getEncoderValue(ALT_pos, HIGH);
+      value[1] = ' ';
+      display.drawString(0, 24, value);
       //debugCommandLine.concat(commandLine.length());
       if(commandLine.length() > 16) {
         commandLine = commandLine.substring(1);        
       }
-      
-      lcd.print(commandLine.substring(0, 16));
+      display.setFont(ArialMT_Plain_16);
+      display.drawString(0, 48, commandLine.substring(0, 16));
+      display.setFont(ArialMT_Plain_24);
 
-      oldCount = masterCount;
+      display.display();
     }
     #endif
   }
 
-  inchar = Serial.read();
-
+  inchar = SerialBT.read();
+  Serial.print(inchar);
+  
   #ifdef USE_LCD
   // build a history of commands sent to this sketch
   if(inchar != '\r' && inchar != '\n') {
     commandLine.concat(inchar);
   }
+  /*
+  display.drawString(0, 0, getEncoderValue(AZ_pos, HIGH));
+  display.drawString(0, 10, getEncoderValue(ALT_pos, HIGH));
+  //debugCommandLine.concat(commandLine.length());
+  if(commandLine.length() > 16) {
+    commandLine = commandLine.substring(1);        
+  }  
+  display.drawString(0, 26, commandLine.substring(0, 16));
+  display.display();
+*/
   #endif
 
   if (inchar == 'Q')
@@ -215,16 +243,16 @@ void loop() {
       String resolution1 = String("");
       String resolution2 = String(""); 
   
-      while(Serial.available() > 0) {
-        inchar = Serial.read();
-        Serial.print(inchar);
+      while(SerialBT.available() > 0) {
+        inchar = SerialBT.read();
+        SerialBT.print(inchar);
         if(inchar == '\t') { break; }
         resolution1.concat(inchar);        
       }
      
       while(Serial.available() > 0) {
-        inchar = Serial.read();
-        Serial.print(inchar);  
+        inchar = SerialBT.read();
+        SerialBT.print(inchar);  
         if(inchar == '\r') { break; }
           resolution2.concat(inchar);    
       }      
@@ -312,14 +340,14 @@ void loop() {
     beenAligned = 1;
   } 
   else {
-    addOutputToCommandLine("?"); 
+    addOutputToCommandLine('?'); 
   }
 
   //Serial.flush();
 }
 
-void addOutputToCommandLine(char* output) {
-  commandLine +="." + *output;  
+void addOutputToCommandLine(char output) {
+  commandLine +="." + output;  
 }
 
 String getEncoderValue(long val, bool outputLeadingSign) {
@@ -359,6 +387,7 @@ void printToSerial(String toPrint) {
   #endif
 
   Serial.print(toPrint);
+  SerialBT.print(toPrint);
 }
 
 
@@ -370,10 +399,10 @@ void printHexEncoderValue(long val)
 
   low = val - high*256;
 
-  if (low<0x10) {Serial.print("0");} 
-  Serial.print(low, HEX);
-  if (high<0x10) {Serial.print("0");} 
-  Serial.print(high, HEX);
+  if (low<0x10) {SerialBT.print("0");} 
+  SerialBT.print(low, HEX);
+  if (high<0x10) {SerialBT.print("0");} 
+  SerialBT.print(high, HEX);
 
   return;
 }
